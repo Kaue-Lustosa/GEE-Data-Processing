@@ -1,0 +1,3 @@
+var table = ee.FeatureCollection("projects/ee-kauelustosamorgadoufrn/assets/unidos");
+Map.setCenter(-36.653, -5.1, 15);
+Map.addLayer(table, {}, 'unidos');

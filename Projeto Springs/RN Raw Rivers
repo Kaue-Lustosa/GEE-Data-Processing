@@ -1,0 +1,39 @@
+//---- recorte da área de interesse ----//
+var admin = ee.FeatureCollection("FAO/GAUL_SIMPLIFIED_500m/2015/level1");  
+var rn = admin.filter(ee.Filter.eq('ADM1_CODE', 684));
+var geometry = rn.geometry;
+print(rn);
+Map.setCenter(-36.5, -6, 10);
+
+//---- adição da Feature HydroSHEDS ----//
+var dataset = ee.FeatureCollection('WWF/HydroSHEDS/v1/FreeFlowingRivers');
+
+//---- identificando os rios principais e afluentes ----//
+var datasetVis = ee.Image().byte().paint(dataset, 'RIV_ORD', 4);
+var clippedVis = datasetVis.clip(rn);
+var visParams = {
+  min: 1,
+  max: 10,
+  palette: ['08519c', '3182bd', '6baed6', 'bdd7e7', 'eff3ff']
+};
+
+//---- identificando as cabeças d'água ----//
+var upstreams = dataset.select('NUOID');
+var strings = upstreams.getString;
+while(strings == 'NoData'){
+ var points = upstreams.draw('red'); 
+ var clippedPoints = points.clip(rn);
+ Map.addLayer(clippedPoints, upVisParam, 'springs');
+}
+var upVisParam = {
+  color: {
+    property: 'NUOID',
+    palette: ['9c0908'],
+    min: 0,
+    max: 10
+  }
+};
+
+//---- adicionando camadas ao mapa ----//
+Map.addLayer(rn, {}, 'RN polygon');
+Map.addLayer(clippedVis, visParams, 'rivers');

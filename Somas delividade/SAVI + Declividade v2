@@ -1,0 +1,145 @@
+/**** Start of imports. If edited, may not auto-convert in the playground. ****/
+var imageVisParam = {"opacity":1,"bands":["SAVI"],"max":0.7,"palette":["00b8ff","9fff04","78e600","34b300","007209"]},
+    imageVisParam2 = {"opacity":1,"bands":["slope"],"min":0,"max":900},
+    imageVisParam3 = {"opacity":1,"bands":["SAVI","slope","B3"],"gamma":3.714},
+    table = ee.FeatureCollection("projects/ee-kauelustosamorgadoufrn/assets/RN_subdistritos_2000");
+/***** End of imports. If edited, may not auto-convert in the playground. *****/
+//---- centralizando a região do RN ----//
+Map.setCenter(-36, -5.7, 8);
+
+//---- recorte da área de interesse ----//
+var rn = table;
+var cearaMirim = table.filter(ee.Filter.eq('NOME', 'Ceara-Mirim'));
+
+//---- função para mascarar as nuvens ----//
+function maskS2clouds(image) {
+  var qa = image.select('QA60').clip(cearaMirim);
+
+  //---- bits 10 e 11 são nuvens e cirrus, respectivamente ----//
+  var cloudBitMask = 1 << 10;
+  var cirrusBitMask = 1 << 11;
+  
+  //---- ambas as flags devem ser setadas para zero, indicando clear conditions ----//
+  var mask = qa.bitwiseAnd(cloudBitMask).eq(0)
+      .and(qa.bitwiseAnd(cirrusBitMask).eq(0));
+
+  return image.updateMask(mask).divide(10000);
+}
+
+//---- adquirindo coleção de imagem da Copernicus ----//
+var image = ee.ImageCollection('COPERNICUS/S2')
+                  .filterDate('2023-01-01', '2023-02-03')
+                  //---- Pré-filtrar para ter menos pixels nublados ----//
+                  .filter(ee.Filter.lt('CLOUDY_PIXEL_PERCENTAGE', 30))
+                  .filterBounds(cearaMirim)
+                  .map(maskS2clouds)
+                  .median();
+
+//---- cálculo do SAVI ----//
+var savi = image.expression('((nir - red) / (nir + red)) * (1 + L)',
+  {
+    'nir': image.select('B8'),
+    'red': image.select('B4'),
+    'L': 0.8
+  });
+
+//---- reduzindo a opacidade para futuros cálculos de soma ----//
+var reduced_opacity_savi = image.expression('savi * 0.5', {
+  'savi':savi,
+}).rename('SAVI');
+var savi_image = image.addBands(reduced_opacity_savi);
+
+//---- clipando a imagem NDVI às regiões do RN ----//
+var clippedSavi = savi_image.clip(rn);
+var saviCearaMirim = savi_image.clip(cearaMirim);
+
+//---- definindo as classes do NDVI ----//
+var ndviClasses = [
+  {name: 'Água', range: [0.0, 0.1], color: 'blue'},
+  {name: 'Floresta', range: [0.2, 0.5], color: 'green'},
+  {name: 'Pastagem', range: [0.5, 0.7], color: 'yellow'},
+  {name: 'Solo exposto', range: [0.7, 1.0], color: 'brown'}
+];
+
+//---- definindo classes de declividade ----//
+var slopeClasses = [
+  {name: 'Plano', range: [0, 5], color: 'lightgreen'},
+  {name: 'Suave', range: [5, 15], color: 'yellow'},
+  {name: 'Moderado', range: [15, 30], color: 'orange'},
+  {name: 'Íngreme', range: [30, 90], color: 'red'}
+];
+
+//---- elevation collection ----//
+var dataset = ee.ImageCollection('JAXA/ALOS/AW3D30/V3_2');
+var elevation = dataset.select('DSM');
+// Reproject an image mosaic using a projection from one of the image tiles,
+// rather than using the default projection returned by .mosaic().
+var proj = elevation.first().select(0).projection();
+var slopeReprojected = ee.Terrain.slope(elevation.mosaic().setDefaultProjection(proj));
+var clippedSlope = slopeReprojected.clip(rn);
+
+//---- combinando as imagens em uma só ----//
+var combinedImage = saviCearaMirim.addBands(clippedSlope);
+
+//---- adicionando camadas ao mapa ----//
+Map.addLayer(rn, {}, 'RN polygon', false);
+//Map.addLayer(clippedSavi, imageVisParam, 'SAVI', false);
+//Map.addLayer(clippedSlope, imageVisParam2, 'Slope', false);
+Map.addLayer(combinedImage, imageVisParam3, 'CBERS image', true);
+
+//-- filtra as regiões com slope = 0 e SAVI = 0 --//
+
+//-- cria imagens binárias onde o slope e o SAVI são iguais a 0 --//
+var combinedZeroImage = clippedSlope.eq(0)
+ .and(clippedSlope.lte(0.1))
+ .and(clippedSavi.select('SAVI').eq(0));
+var zeroCount = combinedZeroImage.connectedPixelCount(256, false);
+
+//-- cria imagens binárias onde o 5 > slope < 30 --//
+var combinedTirtyImage = clippedSlope.gt(5)
+ .and(clippedSlope.lte(30))
+ .and(clippedSavi.select('SAVI').eq(0));
+var tirtySlopeCount = combinedTirtyImage.connectedPixelCount(256, false);
+
+
+// Converter a imagem de rótulos em geometrias
+var zeroGeometry = zeroCount.selfMask().reduceToVectors({
+  geometryType: 'polygon',
+  scale: 30,
+  geometry: cearaMirim,
+  eightConnected: false,
+  labelProperty: 'SAVI_Slope_zero',
+  crs: combinedZeroImage.projection(),
+  maxPixels: 1e13
+});
+var tirtyGeometry = tirtySlopeCount.reduceToVectors({
+  geometryType: 'polygon',
+  scale: 30,
+  geometry: cearaMirim,
+  eightConnected: false,
+  labelProperty: 'SAVI_Slope_tirty',
+  crs: combinedTirtyImage.projection(),
+  maxPixels: 1e13
+});
+
+var polygonVisParam = {color: 'blue'};
+
+var clippedCombined = combinedImage.clip(zeroGeometry);
+
+// Adicionar as camadas ao mapa
+Map.addLayer(zeroGeometry, {}, 'Regiões com slope e SAVI iguais a 0');
+//Map.addLayer(tirtyGeometry, {}, 'Regiões com 5 > slope < 30');
+Map.addLayer(clippedCombined, imageVisParam3, 'Clipped CBERS image', true);
+
+
+var combinedImageSAPFSC = combinedImage.toFloat();
+
+//---- exportando imagem para o Google Drive ----//
+Export.image.toDrive({
+  image: combinedImageSAPFSC,
+  scale: 30,
+  maxPixels: 1e10,
+  folder: 'EE_exports',
+  description: 'combinedImageNatal',
+  region: rn
+});

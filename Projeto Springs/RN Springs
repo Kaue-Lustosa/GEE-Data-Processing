@@ -1,0 +1,64 @@
+// Define the region of interest as the state of Rio Grande do Norte
+var roi = ee.FeatureCollection('users/yourusername/RioGrandeDoNorte');
+
+// Define a function to identify headwater/spring points
+function identifyHeadwater(image) {
+  // Apply the Sobel edge detection filter to the image
+  var edge = ee.Algorithms.CannyEdgeDetector(image, 0.99, 0);
+  
+  // Find connected components in the edge image
+  var connected = edge.connectedComponents({
+    maxSize: 5000,
+    eightConnected: true
+  });
+  
+  // Define a function to check if a point is a local maximum
+  function isLocalMaximum(point) {
+    var neighborhood = connected.neighborhood(ee.Image.constant(1), ee.Kernel.circle(1));
+    var max = neighborhood.reduceRegion({
+      reducer: ee.Reducer.max(),
+      geometry: point.buffer(30),
+      scale: 30
+    });
+    return max.get('labels') == point.get('labels');
+  }
+  
+  // Filter out non-maximum points and return the coordinates of the remaining points
+  var maxPoints = connected.reduceToVectors({
+    geometryType: 'Point',
+    reducer: ee.Reducer.countEvery(),
+    crs: image.select(0).projection(),
+    scale: image.select(0).projection().nominalScale(),
+    geometry: connected,
+    eightConnected: true
+  }).filter(ee.Filter.customFilter({
+    filter: function(feature) {
+      return isLocalMaximum(feature.geometry());
+    },
+    verbose: false
+  })).geometry().coordinates();
+  
+  // Create a feature collection of the maximum points and return it
+  var features = ee.FeatureCollection(maxPoints.map(function(coord) {
+    return ee.Feature(ee.Geometry.Point(coord));
+  }));
+  return features;
+}
+
+// Load the HydroSHEDS dataset, which contains a stream network
+var hydrosheds = ee.FeatureCollection('WWF/HydroSHEDS/v1/FreeFlowingRivers');
+
+// Filter the stream network to include only first-order streams (i.e. headwaters)
+var headwaters = hydrosheds.filterMetadata('UpHydroID', 'equals', 0)
+  .filterBounds(roi);
+
+// Map the identifyHeadwater function over the headwaters
+var headwaterPoints = headwaters.map(function(feature) {
+  var image = ee.Image.constant(0).mask(feature.geometry().buffer(10000));
+  return identifyHeadwater(image).map(function(feature) {
+    return feature.set('UpHydroID', feature.get('labels'));
+  });
+}).flatten();
+
+// Print the result
+print(headwaterPoints);

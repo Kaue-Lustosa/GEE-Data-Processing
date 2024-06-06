@@ -1,0 +1,59 @@
+//---- criação do recorte do RN ----//
+var admin = ee.FeatureCollection("FAO/GAUL_SIMPLIFIED_500m/2015/level1");
+var rn = admin.filter(ee.Filter.eq('ADM1_CODE', 684));
+var geometry = rn.geometry();
+Map.setCenter(-36, -6, 8);
+
+//---- função para mascarar as nuvens ----//
+function applyCloudMask(image) {
+  var qa = image.select('QA_PIXEL');
+  //---- bits 10 e 11 são nuvens e cirrus, respectivamente ----//
+  var cloudBitMask = 1 << 10;
+  var cirrusBitMask = 1 << 11;
+  //---- ambas as flags devem ser setadas para zero, indicando clear conditions ----//
+  var mask = qa.bitwiseAnd(cloudBitMask).eq(0)
+      .and(qa.bitwiseAnd(cirrusBitMask).eq(0));
+  return image.updateMask(mask).divide(10000);
+}
+
+//---- coleção de dados do Landsat 5 (1980) ----//
+var dataset = ee.ImageCollection("LANDSAT/LT05/C02/T2_TOA")
+  .filterDate('1985-02-01', '1985-05-31')
+  //---- Pré-filtrar para ter menos pixels nublados ----//
+  .filter(ee.Filter.lt('CLOUDY_PIXEL_PERCENTAGE', 30))
+  .filterBounds(rn)
+  .map(applyCloudMask)
+  .median()
+  .select(bands);
+//---- selecionando a banda de interesse (multiespectral) ----//
+var bands = dataset.select(['B1', 'B2', 'B3', 'B4', 'B5', 'B6', 'B7']);
+var visParam = {
+  min: 0.0,
+  max: 0.4,
+  gamma: 1.2,
+};
+
+/*//---- coleção de dados do Landsat 5 (2005) ----//
+var dataset = ee.ImageCollection("LANDSAT/LT05/C01/T1_TOA")
+  .filterDate('2000-02-01', '2005-05-31');
+var bands = dataset.select(['B3', 'B2', 'B1'])
+var clippedBands = bands.filterBounds(rn);
+var visParam = {
+  min: 0.0,
+  max: 0.4,
+  gamma: 1.2,
+};
+var cloudMasked = dataset.map(applyCloudMask);*/
+
+//---- adicionando as camadas ----//
+Map.addLayer(dataset, {min: 0, max: 3000, bands: ['B4', 'B3', 'B2']});
+
+//---- exportando a imagem para o Drive ----//
+Export.image.toDrive({
+  image: dataset,
+  description: 'Landsat5_Multispectral_with_CloudMask',
+  folder: 'EE_exports',
+  region: geometry,
+  scale: 30,
+  maxPixels: 1e13
+});

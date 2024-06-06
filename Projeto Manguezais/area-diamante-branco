@@ -1,0 +1,3 @@
+var table = ee.FeatureCollection("projects/ee-kauelustosamorgadoufrn/assets/diamante-branco");
+Map.setCenter(-36.22, -5.12, 14);
+Map.addLayer(table, {}, 'diamante-branco');

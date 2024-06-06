@@ -1,0 +1,3 @@
+var table = ee.FeatureCollection("projects/kaue-lustosa/assets/camurupim");
+Map.setCenter(-36.279, -5.13, 14);
+Map.addLayer(table, {}, 'camurupim');

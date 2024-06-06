@@ -1,0 +1,52 @@
+/**** Start of imports. If edited, may not auto-convert in the playground. ****/
+var imageVisParam = {"opacity":1,"bands":["elevation"],"min":0,"max":900,"palette":["0000ff","00ffff","ffff00","ff0000","ffffff"]};
+/***** End of imports. If edited, may not auto-convert in the playground. *****/
+//---- recorte da área de interesse ----//
+var admin = ee.FeatureCollection("FAO/GAUL_SIMPLIFIED_500m/2015/level1");  
+var rn = admin.filter(ee.Filter.eq('ADM1_CODE', 684));
+var geometry = rn.geometry();
+print(rn);
+Map.setCenter(-36.5, -6, 10);
+
+//---- adquirindo coleção de dados DEM ----//
+var dataset = ee.Image('USGS/SRTMGL1_003');
+var elevation = dataset.select('elevation');
+var clipped_elevation = elevation.clip(rn);
+
+// Função para mapear as áreas de nascentes dos rios
+function mapearNascentes() {
+
+  // Aplica filtro gaussiano para suavizar a imagem do DEM
+  var smooth_dem = clipped_elevation.reduceNeighborhood(ee.Reducer.mean(), ee.Kernel.gaussian(100, 50));
+
+  // Define limite de elevação para identificar as áreas de nascentes dos rios
+  var elev_limite = 150;
+
+  // Cria uma máscara usando a imagem do DEM suavizada e o limite de elevação definido
+  var mask = smooth_dem.gte(elev_limite);
+
+  // Aplica a máscara nas áreas de elevação para identificar as nascentes dos rios
+  var nascentes = mask.selfMask().reduceToVectors({
+    geometryType: 'polygon',
+    scale: 1000,
+    geometry: rn,
+    eightConnected: true,
+    labelProperty: 'nascente',
+    reducer: ee.Reducer.countEvery()
+  });
+
+  // Converte as áreas de nascentes em pontos
+  var clipped_nascentes = nascentes.filterBounds(rn)
+  var pontos = clipped_nascentes.map(function(feature) {
+    var centroid = feature.geometry().centroid(5);
+    return ee.Feature(centroid).copyProperties(feature);
+  });
+
+  // Adiciona os pontos no mapa
+  Map.addLayer(pontos, {color: 'red'}, 'Pontos de nascente');
+}
+
+// Chama a função para exibir as áreas de nascentes dos rios
+mapearNascentes();
+Map.addLayer(rn, {}, 'RN polygon');
+Map.addLayer(clipped_elevation, imageVisParam, 'elevation');

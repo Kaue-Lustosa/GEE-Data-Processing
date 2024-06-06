@@ -1,0 +1,3 @@
+var table = ee.FeatureCollection("projects/ee-kauelustosamorgadoufrn/assets/dois-irmaos");
+Map.setCenter(-36.666, -5.125, 13.5);
+Map.addLayer(table, {}, 'dois-irmaos');

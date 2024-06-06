@@ -1,0 +1,33 @@
+//---- criação do recorte do RN ----//
+var admin = ee.FeatureCollection("FAO/GAUL_SIMPLIFIED_500m/2015/level1");
+var rn = admin.filter(ee.Filter.eq('ADM1_CODE', 684));
+var geometry = rn.geometry();
+Map.setCenter(-36, -6, 8);
+
+//---- função para mascarar as nuvens ----//
+function applyCloudMask(image) {
+  var qa = image.select('QA_PIXEL');
+  //---- bits 10 e 11 são nuvens e cirrus, respectivamente ----//
+  var cloudBitMask = 1 << 10;
+  var cirrusBitMask = 1 << 11;
+  //---- ambas as flags devem ser setadas para zero, indicando clear conditions ----//
+  var mask = qa.bitwiseAnd(cloudBitMask).eq(0)
+      .and(qa.bitwiseAnd(cirrusBitMask).eq(0));
+  return image.updateMask(mask).divide(10000);
+}
+
+//---- coleção do Landsat9 (2020) ----//
+var dataset = ee.ImageCollection("LANDSAT/LC08/C02/T1_RT_TOA")
+      .filterDate('2019-02-01', '2019-05-01')
+      //---- Pré-filtrar para ter menos pixels nublados ----//
+      .filter(ee.Filter.lt('CLOUDY_PIXEL_PERCENTAGE', 30))
+      .filterBounds(rn)
+      .map(applyCloudMask)
+      .median();
+var bands = dataset.select(['B1', 'B2', 'B3', 'B4', 'B5', 'B6', 'B7']);
+var trueColor432Vis = {
+  min: 0.0,
+  max: 0.4,
+};
+
+Map.addLayer(bands, trueColor432Vis, 'True Color (432)');

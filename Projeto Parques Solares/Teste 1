@@ -1,0 +1,92 @@
+/**** Start of imports. If edited, may not auto-convert in the playground. ****/
+var table = ee.FeatureCollection("projects/ee-kauelustosamorgadoufrn/assets/RN_subdistritos_2000"),
+    cbersImage = ee.Image("projects/ee-kauelustosamorgadoufrn/assets/CBERS_4A_WPM_ceara-mirim"),
+    imageVisParam = {"opacity":1,"max":0.7,"palette":["00b8ff","9fff04","78e600","34b300","007209"]};
+/***** End of imports. If edited, may not auto-convert in the playground. *****/
+// Etapa 1:
+
+// Importar a coleção de imagens Sentinel-2
+var sentinelCollection = ee.ImageCollection('COPERNICUS/S2');
+
+// Definir a região de interesse (Ceará-mirim, Rio Grande do Norte)
+var rn = table;
+var roi = table.filter(ee.Filter.eq('NOME', 'Ceara-Mirim'));
+
+// Filtrar imagens por data e região de interesse
+var filteredCollection = sentinelCollection
+  .filterBounds(roi)
+  .filterDate('2023-01-01', '2023-12-31');
+
+// Função para calcular o índice SAVI
+var calculateSAVI = function(image) {
+  var savi = image.expression(
+    '((NIR - RED) / (NIR + RED + L)) * (1 + L)',
+    {
+      'NIR': image.select('B8'),  // Banda NIR
+      'RED': image.select('B4'),  // Banda RED
+      'L': 0.5
+    }
+  ).rename('SAVI');
+  return image.addBands(savi);
+};
+
+// Aplicar a função de cálculo SAVI à coleção de imagens filtradas
+var saviCollection = filteredCollection.map(calculateSAVI);
+
+// Calcular a declividade usando a coleção DEM (Modelo Digital de Elevação)
+var dem = ee.Image('CGIAR/SRTM90_V4');
+var slope = ee.Terrain.slope(dem).rename('Slope');
+
+// Combinar SAVI e declividade em uma única imagem
+var combinedImage = saviCollection.median().addBands(slope);
+
+var thresholdedGeometries = combinedImage.expression(
+  '((SAVI < 0.1) && (Slope < 45)) ? 1 : 0',
+  {
+    'SAVI': combinedImage.select('SAVI'),
+    'Slope': combinedImage.select('Slope')
+  }
+).rename('Thresholded');
+
+// Adicionar uma banda de contagem de geometrias
+var countBand = ee.Image(1).rename('Count');
+thresholdedGeometries = thresholdedGeometries.addBands(countBand);
+
+// Vetorizar as geometrias
+var vectorizedGeometries = thresholdedGeometries
+  .selfMask()
+  .reduceToVectors({
+    geometry: roi,
+    scale: 10,
+    geometryType: 'polygon',
+    eightConnected: false,
+    labelProperty: 'Thresholded',
+    reducer: ee.Reducer.first(),
+    bestEffort: true  // Permitir o uso da escala que se encaixa em maxPixels
+  });
+
+// Visualizar as geometrias no mapa
+Map.centerObject(roi, 12);
+Map.addLayer(vectorizedGeometries, {color: 'FF0000'}, 'Geometries');
+
+// Exportar as geometrias como uma FeatureCollection
+Export.table.toAsset({
+  'collection': vectorizedGeometries,
+  'description': 'geometries_ceara_mirim',
+  'assetId': 'users/seu_usuario/geometries_ceara_mirim'
+});
+
+// Etapa 2:
+
+var clippedImage = cbersImage.clip(vectorizedGeometries);
+Map.addLayer(clippedImage, imageVisParam, 'CBERS image');
+
+// Exportando imagem para o drive
+
+Export.image.toDrive({
+  image: clippedImage,
+  description: 'NDVIimage',
+  scale: 30,
+  region: vectorizedGeometries,
+  maxPixels: 1e13
+});

@@ -1,0 +1,252 @@
+//---- centralizando a região do RN ----//
+Map.setCenter(-37, -5.65, 8.5);
+
+//---- criação do recorte de Venha-ver ----//
+var admin = ee.FeatureCollection("FAO/GAUL_SIMPLIFIED_500m/2015/level2");
+var venhaVer = admin.filter(ee.Filter.eq('ADM2_CODE', 10148));
+Map.addLayer(venhaVer, {}, 'Venha-ver');
+
+//---- criação do recorte de São Miguel ----//
+var saoMiguel = admin.filter(ee.Filter.eq('ADM2_CODE', 10119));
+Map.addLayer(saoMiguel, {}, 'São Miguel');
+
+//---- criação do recorte de Coronel João Pessoa ----//
+var coronelJoaoPessoa = admin.filter(ee.Filter.eq('ADM2_CODE', 10017));
+Map.addLayer(coronelJoaoPessoa, {}, 'Coronel João Pessoa');
+
+//---- criação do recorte de Luís Gomes ----//
+var luisGomes = admin.filter(ee.Filter.eq('ADM2_CODE', 10060));
+Map.addLayer(luisGomes, {}, 'Luís Gomes');
+
+
+//---- criação do recorte de Major Sales ----//
+var majorSales = admin.filter(ee.Filter.eq('ADM2_CODE', 10063));
+Map.addLayer(majorSales, {}, 'Major Sales');
+
+//---- criação do recorte de Paraná ----//
+var parana = admin.filter(ee.Filter.eq('ADM2_CODE', 10077));
+Map.addLayer(parana, {}, 'Paraná');
+
+//---- criação do recorte de José da Penha ----//
+var joseDaPenha = admin.filter(ee.Filter.eq('ADM2_CODE', 10050));
+Map.addLayer(joseDaPenha, {}, 'José da Penha');
+
+//---- criação do recorte de Riacho de Santana ----//
+var riachoDeSantana = admin.filter(ee.Filter.eq('ADM2_CODE', 10100));
+Map.addLayer(riachoDeSantana, {}, 'Riacho de Santana');
+
+//---- criação do recorte de Água Nova ----//
+var aguaNova = admin.filter(ee.Filter.eq('ADM2_CODE', 9989));
+Map.addLayer(aguaNova, {}, 'Água Nova');
+
+//---- criação do recorte de Doutor Severiano ----//
+var doutorSeveriano = admin.filter(ee.Filter.eq('ADM2_CODE', 10020));
+Map.addLayer(doutorSeveriano, {}, 'Doutor Severiano');
+
+//---- criação do recorte de Encanto ----//
+var encanto = admin.filter(ee.Filter.eq('ADM2_CODE', 10021));
+Map.addLayer(encanto, {}, 'Encanto');
+
+//---- criação do recorte de Rafael Fernandes ----//
+var rafaelFernandes = admin.filter(ee.Filter.eq('ADM2_CODE', 10097));
+Map.addLayer(rafaelFernandes, {}, 'Rafael Fernandes');
+
+//---- criação do recorte de Pau dos Ferros ----//
+var pauDosFerros = admin.filter(ee.Filter.eq('ADM2_CODE', 10085));
+Map.addLayer(pauDosFerros, {}, 'Pau dos Ferros');
+
+//---- criação do recorte de Marcelino Vieira ----//
+var marcelinoVieira = admin.filter(ee.Filter.eq('ADM2_CODE', 10064));
+Map.addLayer(marcelinoVieira, {}, 'Marcelino Vieira');
+
+//---- criação do recorte de Tenente Ananias ----//
+var tenenteAnanias = admin.filter(ee.Filter.eq('ADM2_CODE', 10138));
+Map.addLayer(tenenteAnanias, {}, 'Tenente Ananias');
+
+//---- criação do recorte de Alexandria ----//
+var alexandria = admin.filter(ee.Filter.eq('ADM2_CODE', 9990));
+Map.addLayer(alexandria, {}, 'Alexandria');
+
+//---- criação do recorte de Pilões ----//
+var piloes = admin.filter(ee.Filter.eq('ADM2_CODE', 10091));
+Map.addLayer(piloes, {}, 'Pilões');
+
+//---- criação do recorte de João Dias ----//
+var joaoDias = admin.filter(ee.Filter.eq('ADM2_CODE', 10049));
+Map.addLayer(joaoDias, {}, 'João Dias');
+
+//---- criação do recorte de Antônio Martins ----//
+var antonioMartins = admin.filter(ee.Filter.eq('ADM2_CODE', 9994));
+Map.addLayer(antonioMartins, {}, 'Antônio Martins');
+
+//---- criação do recorte de Serrinha dos Pintos ----//
+var serrinhaDosPintos = admin.filter(ee.Filter.eq('ADM2_CODE', 10132));
+Map.addLayer(serrinhaDosPintos, {}, 'Serrinha dos Pintos');
+
+//---- criação do recorte de Frutuoso Gomes ----//
+var frutuosoGomes = admin.filter(ee.Filter.eq('ADM2_CODE', 10029));
+Map.addLayer(frutuosoGomes, {}, 'Frutuoso Gomes');
+
+//---- criação do recorte de Martins ----//
+var martins = admin.filter(ee.Filter.eq('ADM2_CODE', 10065));
+Map.addLayer(martins, {}, 'Martins');
+
+//---- criação do recorte de Portalegre ----//
+var portalegre = admin.filter(ee.Filter.eq('ADM2_CODE', 10093));
+Map.addLayer(portalegre, {}, 'Portalegre');
+
+//---- criação do recorte de Francisco Dantas ----//
+var franciscoDantas = admin.filter(ee.Filter.eq('ADM2_CODE', 10028));
+Map.addLayer(franciscoDantas, {}, 'Francisco Dantas');
+
+//---- criação do recorte de São Francisco do Oeste ----//
+var saoFranciscoDoOeste = admin.filter(ee.Filter.eq('ADM2_CODE', 10113));
+Map.addLayer(saoFranciscoDoOeste, {}, 'São Francisco do Oeste');
+
+//---- criação do recorte de Rodolfo Fernandes ----//
+var rodolfoFernandes = admin.filter(ee.Filter.eq('ADM2_CODE', 10103));
+Map.addLayer(rodolfoFernandes, {}, 'Rodolfo Fernandes');
+
+//---- criação do recorte de Taboleiro Grande ----//
+var taboleiroGrande = admin.filter(ee.Filter.eq('ADM2_CODE', 10135));
+Map.addLayer(taboleiroGrande, {}, 'Taboleiro Grande');
+
+//---- criação do recorte de Riacho da Cruz ----//
+var riachoDaCruz = admin.filter(ee.Filter.eq('ADM2_CODE', 10099));
+Map.addLayer(riachoDaCruz, {}, 'Riacho da Cruz');
+
+//---- criação do recorte de Viçosa ----//
+var vicosa = admin.filter(ee.Filter.eq('ADM2_CODE', 10150));
+Map.addLayer(vicosa, {}, 'Viçosa');
+
+//---- criação do recorte de Umarizal ----//
+var umarizal = admin.filter(ee.Filter.eq('ADM2_CODE', 10145));
+Map.addLayer(umarizal, {}, 'Umarizal');
+
+//---- criação do recorte de Lucrécia ----//
+var lucrecia = admin.filter(ee.Filter.eq('ADM2_CODE', 10059));
+Map.addLayer(lucrecia, {}, 'Lucrécia');
+
+//---- criação do recorte de Almino Afonso ----//
+var alminoAfonso = admin.filter(ee.Filter.eq('ADM2_CODE', 9991));
+Map.addLayer(alminoAfonso, {}, 'Almino Afonso');
+
+//---- criação do recorte de Patu ----//
+var patu = admin.filter(ee.Filter.eq('ADM2_CODE', 10084));
+Map.addLayer(patu, {}, 'Patu');
+
+//---- criação do recorte de Rafael Godeiro ----//
+var rafaelGodeiro = admin.filter(ee.Filter.eq('ADM2_CODE', 10098));
+Map.addLayer(rafaelGodeiro, {}, 'Rafael Godeiro');
+
+//---- criação do recorte de Olho-d'Água do Borges ----//
+var olhodAguaDoBorges = admin.filter(ee.Filter.eq('ADM2_CODE', 10075));
+Map.addLayer(olhodAguaDoBorges, {}, 'Olho-dÁgua do Borges');
+
+//---- criação do recorte de Itaú ----//
+var itau = admin.filter(ee.Filter.eq('ADM2_CODE', 10039));
+Map.addLayer(itau, {}, 'Itaú');
+
+//---- criação do recorte de Severiano Melo ----//
+var severianoMelo = admin.filter(ee.Filter.eq('ADM2_CODE', 10133));
+Map.addLayer(severianoMelo, {}, 'Severiano Melo');
+
+//---- criação do recorte de Apodi ----//
+var apodi = admin.filter(ee.Filter.eq('ADM2_CODE', 9995));
+Map.addLayer(apodi, {}, 'Apodi');
+
+//---- criação do recorte de Caraúbas ----//
+var caraubas = admin.filter(ee.Filter.eq('ADM2_CODE', 10011));
+Map.addLayer(caraubas, {}, 'Caraúbas');
+
+//---- criação do recorte de Janduís ----//
+var janduis = admin.filter(ee.Filter.eq('ADM2_CODE', 10042));
+Map.addLayer(janduis, {}, 'Janduís');
+
+//---- criação do recorte de Messias Targino ----//
+var messiasTargino = admin.filter(ee.Filter.eq('ADM2_CODE', 10067));
+Map.addLayer(messiasTargino, {}, 'Messias Targino');
+
+//---- criação do recorte de Augusto Severo ----//
+var augustoSevero = admin.filter(ee.Filter.eq('ADM2_CODE', 9998));
+Map.addLayer(augustoSevero, {}, 'Augusto Severo');
+
+//---- criação do recorte de Triunfo Potiguar ----//
+var triunfoPotiguar = admin.filter(ee.Filter.eq('ADM2_CODE', 10144));
+Map.addLayer(triunfoPotiguar, {}, 'Triunfo Potiguar');
+
+//---- criação do recorte de Jucurutu ----//
+var jucurutu = admin.filter(ee.Filter.eq('ADM2_CODE', 10051));
+Map.addLayer(jucurutu, {}, 'Jucurutu');
+
+//---- criação do recorte de São Rafael ----//
+var saoRafael = admin.filter(ee.Filter.eq('ADM2_CODE', 10123));
+Map.addLayer(saoRafael, {}, 'São Rafael');
+
+//---- criação do recorte de Itajá ----//
+var itaja = admin.filter(ee.Filter.eq('ADM2_CODE', 10038));
+Map.addLayer(itaja, {}, 'Itajá');
+
+//---- criação do recorte de Ipanguaçu ----//
+var ipanguacu = admin.filter(ee.Filter.eq('ADM2_CODE', 10036));
+Map.addLayer(ipanguacu, {}, 'Ipanguaçu');
+
+//---- criação do recorte de Açu ----//
+var acu = admin.filter(ee.Filter.eq('ADM2_CODE', 9987));
+Map.addLayer(acu, {}, 'Açu');
+
+//---- criação do recorte de Paraú ----//
+var parau = admin.filter(ee.Filter.eq('ADM2_CODE', 10078));
+Map.addLayer(parau, {}, 'Paraú');
+
+//---- criação do recorte de Upanema ----//
+var upanema = admin.filter(ee.Filter.eq('ADM2_CODE', 10146));
+Map.addLayer(upanema, {}, 'Upanema');
+
+//---- criação do recorte de Felipe Guerra ----//
+var felipeGuerra = admin.filter(ee.Filter.eq('ADM2_CODE', 10025));
+Map.addLayer(felipeGuerra, {}, 'Felipe Guerra');
+
+//---- criação do recorte de Governador Dix-Sept Rosado ----//
+var governadorDixSeptRosado = admin.filter(ee.Filter.eq('ADM2_CODE', 10032));
+Map.addLayer(governadorDixSeptRosado, {}, 'Governador Dix-Sept Rosado');
+
+//---- criação do recorte de Baraúna ----//
+var barauna = admin.filter(ee.Filter.eq('ADM2_CODE', 10000));
+Map.addLayer(barauna, {}, 'Baraúna');
+
+//---- criação do recorte de Tibau ----//
+var tibau = admin.filter(ee.Filter.eq('ADM2_CODE', 10140));
+Map.addLayer(tibau, {}, 'Tibau');
+
+//---- criação do recorte de Grossos ----//
+var grossos = admin.filter(ee.Filter.eq('ADM2_CODE', 10033));
+Map.addLayer(grossos, {}, 'Grossos');
+
+//---- criação do recorte de Areia Branca ----//
+var areiaBranca = admin.filter(ee.Filter.eq('ADM2_CODE', 9996));
+Map.addLayer(areiaBranca, {}, 'Areia Branca');
+
+//---- criação do recorte de Mossoró ----//
+var mossoro = admin.filter(ee.Filter.eq('ADM2_CODE', 10071));
+Map.addLayer(mossoro, {}, 'Mossoró');
+
+//---- criação do recorte de Serra do Mel ----//
+var mossoro = admin.filter(ee.Filter.eq('ADM2_CODE', 10129));
+Map.addLayer(mossoro, {}, 'Serra do Mel');
+
+//---- criação do recorte de Porto do Mangue ----//
+var portoDoMangue = admin.filter(ee.Filter.eq('ADM2_CODE', 10094));
+Map.addLayer(portoDoMangue, {}, 'Porto do Mangue');
+
+//---- criação do recorte de Carnaubais ----//
+var carnaubais = admin.filter(ee.Filter.eq('ADM2_CODE', 10013));
+Map.addLayer(carnaubais, {}, 'Carnaubais');
+
+//---- criação do recorte de Alto do Rodrigues ----//
+var altoDoRodrigues = admin.filter(ee.Filter.eq('ADM2_CODE', 9992));
+Map.addLayer(altoDoRodrigues, {}, 'Alto do Rodrigues');
+
+//---- criação do recorte de Pendências ----//
+var pendencias = admin.filter(ee.Filter.eq('ADM2_CODE', 10090));
+Map.addLayer(pendencias, {}, 'Pendências');

@@ -1,0 +1,37 @@
+//---- criação do recorte do CE ----//
+var admin = ee.FeatureCollection("FAO/GAUL_SIMPLIFIED_500m/2015/level1");
+
+//---- criação do filtro com as condições para todos os recortes desejados ----//
+var filter = ee.Filter.or(
+  ee.Filter.eq('ADM1_CODE', 670), // CE
+  ee.Filter.eq('ADM1_CODE', 679), // PB
+  ee.Filter.eq('ADM1_CODE', 684) // RN
+);
+
+//---- criação do recorte único com todas as áreas desejadas ----//
+var recorte = admin.filter(filter);
+
+//---- transformando o recorte em imagem  ----//
+var reducer = ee.Reducer.mean(); // definindo a função de redução
+
+var mask = admin.reduceToImage({
+  properties: ['ADM1_CODE'],
+  reducer: ee.Reducer.first().unweighted(),
+}); // filtrando a coleção
+var clippedMask = mask.clip(recorte); // restringindo o limite da imagem
+var visParam = {"opacity":1,"palette":["#f7ffcc"]}; //criando o parâmetro de visualização de imagem
+
+//---- visualização do mapa ----//
+Map.setCenter(-36.5, -5.5, 6.5);
+Map.addLayer(recorte, {}, 'polygon');
+Map.addLayer(clippedMask, visParam, 'mask');
+
+//---- exportando imagem pro drive  ----//
+Export.image.toDrive({
+  image: clippedMask,
+  description: 'Região do Nordeste',
+  folder: 'EE_exports',
+  region: recorte,
+  scale: 30,
+  maxPixels: 1e13
+});

@@ -1,0 +1,127 @@
+/**** Start of imports. If edited, may not auto-convert in the playground. ****/
+var imageVisParam = {"opacity":1,"bands":["SAVI"],"max":0.7,"palette":["00b8ff","9fff04","78e600","34b300","007209"]};
+/***** End of imports. If edited, may not auto-convert in the playground. *****/
+//---- criação do recorte do RN ----//
+var admin = ee.FeatureCollection("FAO/GAUL_SIMPLIFIED_500m/2015/level1");
+var rn = admin.filter(ee.Filter.eq('ADM1_CODE', 684));
+var geometry = rn.geometry();
+Map.setCenter(-36, -5.7, 8);
+
+//---- criação do recorte geral ----//
+var admin = ee.FeatureCollection("FAO/GAUL_SIMPLIFIED_500m/2015/level2");
+
+//---- criação do filtro com as condições para todos os recortes desejados ----//
+var filter = ee.Filter.or(
+ee.Filter.eq('ADM2_CODE', 10148), // Venha-ver
+ee.Filter.eq('ADM2_CODE', 10119), // São Miguel
+ee.Filter.eq('ADM2_CODE', 10017), // Coronel João Pessoa
+ee.Filter.eq('ADM2_CODE', 10060), // Luís Gomes
+ee.Filter.eq('ADM2_CODE', 10063), // Major Sales
+ee.Filter.eq('ADM2_CODE', 10077), // Paraná
+ee.Filter.eq('ADM2_CODE', 10050), // José da Penha
+ee.Filter.eq('ADM2_CODE', 10100), // Riacho de Santana
+ee.Filter.eq('ADM2_CODE', 9989), // Água Nova
+ee.Filter.eq('ADM2_CODE', 10020), // Doutor Severiano
+ee.Filter.eq('ADM2_CODE', 10021), // Encanto
+ee.Filter.eq('ADM2_CODE', 10097), // Rafael Fernandes
+ee.Filter.eq('ADM2_CODE', 10085), // Pau dos Ferros
+ee.Filter.eq('ADM2_CODE', 10064), // Marcelino Vieira
+ee.Filter.eq('ADM2_CODE', 10138), // Tenente Ananias
+ee.Filter.eq('ADM2_CODE', 9990), // Alexandria
+ee.Filter.eq('ADM2_CODE', 10091), // Pilões
+ee.Filter.eq('ADM2_CODE', 10049), // João Dias
+ee.Filter.eq('ADM2_CODE', 9994), // Antônio Martins
+ee.Filter.eq('ADM2_CODE', 10132), // Serrinha dos Pintos
+ee.Filter.eq('ADM2_CODE', 10029), // Frutuoso Gomes
+ee.Filter.eq('ADM2_CODE', 10065), // Martins
+ee.Filter.eq('ADM2_CODE', 10093), // Portalegre
+ee.Filter.eq('ADM2_CODE', 10028), // Francisco Dantas
+ee.Filter.eq('ADM2_CODE', 10113), // São Francisco do Oeste
+ee.Filter.eq('ADM2_CODE', 10103), // Rodolfo Fernandes
+ee.Filter.eq('ADM2_CODE', 10135), // Taboleiro Grande
+ee.Filter.eq('ADM2_CODE', 10099), // Riacho da Cruz
+ee.Filter.eq('ADM2_CODE', 10150), // Viçosa
+ee.Filter.eq('ADM2_CODE', 10145), // Umarizal
+ee.Filter.eq('ADM2_CODE', 10059), // Lucrécia
+ee.Filter.eq('ADM2_CODE', 9991), // Almino Afonso
+ee.Filter.eq('ADM2_CODE', 10084), // Patu
+ee.Filter.eq('ADM2_CODE', 10098), // Rafael Godeiro
+ee.Filter.eq('ADM2_CODE', 10075), // Olho-d'Água do Borges
+ee.Filter.eq('ADM2_CODE', 10039), // Itaú
+ee.Filter.eq('ADM2_CODE', 10133), // Severiano Melo
+ee.Filter.eq('ADM2_CODE', 9995), // Apodi
+ee.Filter.eq('ADM2_CODE', 10011), // Caraúbas
+ee.Filter.eq('ADM2_CODE', 10042), // Janduís
+ee.Filter.eq('ADM2_CODE', 10067), // Messias Targino
+ee.Filter.eq('ADM2_CODE', 9998), // Augusto Severo
+ee.Filter.eq('ADM2_CODE', 10144), // Triunfo Potiguar
+ee.Filter.eq('ADM2_CODE', 10051), // Jucurutu
+ee.Filter.eq('ADM2_CODE', 10123), // São Rafael
+ee.Filter.eq('ADM2_CODE', 10038), // Itajá
+ee.Filter.eq('ADM2_CODE', 10036), // Ipanguaçu
+ee.Filter.eq('ADM2_CODE', 9987), // Açu
+ee.Filter.eq('ADM2_CODE', 10078), // Paraú
+ee.Filter.eq('ADM2_CODE', 10146), // Upanema
+ee.Filter.eq('ADM2_CODE', 10025), // Felipe Guerra
+ee.Filter.eq('ADM2_CODE', 10032), // Governador Dix-Sept Rosado
+ee.Filter.eq('ADM2_CODE', 10000), // Baraúna
+ee.Filter.eq('ADM2_CODE', 10140), // Tibau
+ee.Filter.eq('ADM2_CODE', 10033), // Grossos
+ee.Filter.eq('ADM2_CODE', 9996), // Areia Branca
+ee.Filter.eq('ADM2_CODE', 10071), // Mossoró
+ee.Filter.eq('ADM2_CODE', 10129), // Serra do Mel
+ee.Filter.eq('ADM2_CODE', 10094), // Porto do Mangue
+ee.Filter.eq('ADM2_CODE', 10013), // Carnaubais
+ee.Filter.eq('ADM2_CODE', 9992), // Alto do Rodrigues
+ee.Filter.eq('ADM2_CODE', 10090) // Pendências
+);
+
+//---- criação do recorte único com todas as áreas desejadas ----//
+var recorte = admin.filter(filter);
+
+//---- função para mascarar as nuvens ----//
+function maskS2clouds(image) {
+  var qa = image.select('QA60').clip(recorte);
+
+  //---- bits 10 e 11 são nuvens e cirrus, respectivamente ----//
+  var cloudBitMask = 1 << 10;
+  var cirrusBitMask = 1 << 11;
+  
+  //---- ambas as flags devem ser setadas para zero, indicando clear conditions ----//
+  var mask = qa.bitwiseAnd(cloudBitMask).eq(0)
+      .and(qa.bitwiseAnd(cirrusBitMask).eq(0));
+
+  return image.updateMask(mask).divide(10000);
+}
+
+//---- adquirindo coleção de imagem da Copernicus ----//
+var image = ee.ImageCollection('COPERNICUS/S2')
+                  .filterDate('2023-01-01', '2023-02-03')
+                  //---- Pré-filtrar para ter menos pixels nublados ----//
+                  .filter(ee.Filter.lt('CLOUDY_PIXEL_PERCENTAGE', 30))
+                  .filterBounds(recorte)
+                  .map(maskS2clouds)
+                  .median();
+
+//---- cálculo do SAVI ----//
+var savi = image.expression('((nir - red) / (nir + red)) * (1 + L)',
+  {
+    'nir': image.select('B8'),
+    'red': image.select('B4'),
+    'L': 0.5
+  }).rename('SAVI');
+var clippedSavi = savi.clip(recorte);
+
+//---- adicionando camadas ao mapa ----//
+Map.addLayer(rn, {}, 'RN polygon');
+Map.addLayer(clippedSavi, imageVisParam, 'SAVI');
+
+//---- exportando imagem pro drive  ----//
+Export.image.toDrive({
+  image: clippedSavi,
+  description: 'RN Sentinel SAVI',
+  folder: 'EE_exports',
+  region: recorte,
+  scale: 30,
+  maxPixels: 1e13
+});

@@ -1,0 +1,3 @@
+var table = ee.FeatureCollection("projects/ee-kauelustosamorgadoufrn/assets/guanabara");
+Map.setCenter(-37.2, -5.025, 14);
+Map.addLayer(table, {}, 'guanabara');

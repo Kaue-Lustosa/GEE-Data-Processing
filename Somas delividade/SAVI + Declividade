@@ -1,0 +1,53 @@
+/**** Start of imports. If edited, may not auto-convert in the playground. ****/
+var imageVisParam = {"opacity":1,"bands":["SAVI"],"max":0.7,"palette":["00b8ff","9fff04","78e600","34b300","007209"]},
+    table = ee.FeatureCollection("projects/ee-kauelustosamorgadoufrn/assets/RN_RG_Intermediarias_2021");
+/***** End of imports. If edited, may not auto-convert in the playground. *****/
+//-- ajustando a região de interesse (roi) --/
+Map.setCenter(-36.5, -6, 7);
+var natal = table.filter(ee.Filter.eq('NM_RGINT', 'Natal'));
+var mossoro = table.filter(ee.Filter.eq('NM_RGINT', 'Mossoró'));
+var caico = table.filter(ee.Filter.eq('NM_RGINT', 'Caicó'));
+Map.addLayer(table, {}, 'Regiões Intermediárias', false);
+Map.addLayer(natal, {}, 'Região de Natal');
+Map.addLayer(mossoro, {}, 'Região de Mossoró');
+Map.addLayer(caico, {}, 'Região de Caicó');
+
+// 1. Import the Landsat 8 image
+var l8 = ee.ImageCollection('LANDSAT/LC08/C01/T1_TOA');
+
+// 2. Get the least cloudy image in 2015.
+var image = ee.Image(l8.filterBounds(table)
+                       .filterDate('2020-01-01', '2022-06-01')
+                       .sort('CLOUD_COVER')
+                       .median());
+
+// 3. Compute the Normalized Difference Vegetation Index (NDVI).
+var nir = image.select('B5');
+var red = image.select('B4');
+var ndvi = nir.subtract(red).divide(nir.add(red)).rename('NDVI');
+var clippedNDVI = ndvi.clip(table);
+
+//---- cálculo do SAVI ----//
+var savi = nir.subtract(red).divide(nir.add(red)).multiply(1.8).rename('SAVI');
+var clippedSAVI = savi.clip(table);
+
+//---- clipando a imagem SAVI às regiões do RN ----//
+var saviNatal = savi.clip(natal);
+var saviMossoro = savi.clip(mossoro);
+var saviCaico = savi.clip(caico);
+
+// 4. Display the result.
+Map.setCenter(-36, -6, 8);
+var params = {min: -0.41, max: 0.56, palette:['red', 'yellow', 'green']};
+Map.addLayer(saviNatal, params, 'SAVI Natal');
+Map.addLayer(saviMossoro, params, 'SAVI Mossoró');
+Map.addLayer(saviCaico, params, 'SAVI Caicó');
+
+// 5. Export to Drive
+Export.image.toDrive({
+  image: saviNatal,
+  description: 'SAVIimage',
+  scale: 10,
+  region: natal,
+  maxPixels: 1e13
+});

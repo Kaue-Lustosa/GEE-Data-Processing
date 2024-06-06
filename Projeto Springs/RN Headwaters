@@ -1,0 +1,44 @@
+// Load the SRTM DEM dataset.
+var srtm = ee.Image('USGS/SRTMGL1_003');
+
+//---- recorte da área de interesse ----//
+var admin = ee.FeatureCollection("FAO/GAUL_SIMPLIFIED_500m/2015/level1");  
+var rn = admin.filter(ee.Filter.eq('ADM1_CODE', 684));
+var geometry = rn.geometry();
+print(rn);
+Map.setCenter(-36.5, -6, 9);
+
+// Clip the dataset to the region of interest.
+var srtm_roi = srtm.clip(rn);
+
+// Define the neighborhood size for the focal operations.
+var neighborhood = ee.Kernel.square({
+  radius: 15,
+  units: 'pixels'
+});
+
+// Calculate the slope of the terrain.
+var slope = ee.Terrain.slope(srtm_roi);
+
+// Create a binary mask for high slopes.
+var highSlopeMask = slope.gt(30);
+
+// Apply a median filter to smooth the DEM.
+var srtm_roi_filtered = srtm_roi.focal_median({
+  kernel: neighborhood,
+  iterations: 5
+});
+
+// Calculate the vertical distance between cells in the DEM.
+var verticalDistance = srtm_roi_filtered.subtract(srtm_roi_filtered.focal_min({
+  kernel: neighborhood,
+  iterations: 1
+}));
+
+// Create a binary mask for high vertical distances (potential headwaters).
+var highVerticalDistanceMask = verticalDistance.gt(50);
+
+// Combine the high slope and high vertical distance masks.
+var headwaters = highSlopeMask.and(highVerticalDistanceMask);
+
+Map.addLayer(headwaters.updateMask(headwaters), {palette: 'blue'}, 'Headwaters');

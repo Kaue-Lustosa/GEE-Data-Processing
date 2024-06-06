@@ -1,0 +1,3 @@
+var table = ee.FeatureCollection("projects/ee-kauelustosamorgadoufrn/assets/francisco-mescal");
+Map.setCenter(-37.18, -5.025, 13);
+Map.addLayer(table, {}, 'francisco-mescal')
